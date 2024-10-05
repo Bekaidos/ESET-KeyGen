@@ -1,7 +1,6 @@
 name: Generator
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       account:
@@ -23,10 +22,25 @@ on:
         - guerrillamail
         - developermail
         default: developermail
+
 jobs:
   GenerateKey:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Install Python
+        run: |
+          sudo apt update
+          sudo apt install -y python3 python3-pip python3-venv
+
+      - name: Setup Python Environment
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install -r ESET-KeyGen/requirements.txt
+
       - name: Generate key
         run: |
           ACCOUNT=${{ github.event.inputs.account }}
@@ -34,29 +48,28 @@ jobs:
           MAIL=${{ github.event.inputs.mail }}
           git clone https://github.com/rzc0d3r/ESET-KeyGen.git
           cd ESET-KeyGen
-          sudo apt update
-          sudo apt install python3-pip
-          sudo pip install -r requirements.txt
+          source venv/bin/activate
           if [[ (${ACCOUNT} != 0) && (${KEY} != 0) ]]
           then
-          (seq 1 $((ACCOUNT)) | xargs -I {} -P $((ACCOUNT)) python3 main.py --chrome --account --email-api ${MAIL} --skip-webdriver-menu --skip-update-check) & (seq 1 $((KEY)) | xargs -I {} -P $((KEY)) python3 main.py --chrome --key --email-api ${MAIL} --skip-webdriver-menu --skip-update-check)
-          echo "Account:" >> $GITHUB_STEP_SUMMARY
-          cat ./*ACCOUNTS.txt >> $GITHUB_STEP_SUMMARY
-          echo -e "\nKey:" >> $GITHUB_STEP_SUMMARY
-          cat ./*KEYS.txt >> $GITHUB_STEP_SUMMARY
-          exit
+            (seq 1 $((ACCOUNT)) | xargs -I {} -P $((ACCOUNT)) python3 main.py --chrome --account --email-api ${MAIL} --skip-webdriver-menu --skip-update-check) & 
+            (seq 1 $((KEY)) | xargs -I {} -P $((KEY)) python3 main.py --chrome --key --email-api ${MAIL} --skip-webdriver-menu --skip-update-check)
+            echo "Account:" >> $GITHUB_STEP_SUMMARY
+            cat ./*ACCOUNTS.txt >> $GITHUB_STEP_SUMMARY
+            echo -e "\nKey:" >> $GITHUB_STEP_SUMMARY
+            cat ./*KEYS.txt >> $GITHUB_STEP_SUMMARY
+            exit
           fi
           
           if [[ ${ACCOUNT} != 0 ]]
           then
-          seq 1 $((ACCOUNT)) | xargs -I {} -P $((ACCOUNT)) python3 main.py --chrome --account --email-api ${MAIL} --skip-webdriver-menu --skip-update-check
-          echo -e "\nAccount:" >> $GITHUB_STEP_SUMMARY
-          cat ./*ACCOUNTS.txt >> $GITHUB_STEP_SUMMARY
+            seq 1 $((ACCOUNT)) | xargs -I {} -P $((ACCOUNT)) python3 main.py --chrome --account --email-api ${MAIL} --skip-webdriver-menu --skip-update-check
+            echo -e "\nAccount:" >> $GITHUB_STEP_SUMMARY
+            cat ./*ACCOUNTS.txt >> $GITHUB_STEP_SUMMARY
           fi
           
           if [[ ${KEY} != 0 ]]
           then
-          seq 1 $((KEY)) | xargs -I {} -P $((KEY)) python3 main.py --chrome --key --email-api ${MAIL} --skip-webdriver-menu --skip-update-check
-          echo -e "\nKey:" >> $GITHUB_STEP_SUMMARY
-          cat ./*KEYS.txt >> $GITHUB_STEP_SUMMARY
+            seq 1 $((KEY)) | xargs -I {} -P $((KEY)) python3 main.py --chrome --key --email-api ${MAIL} --skip-webdriver-menu --skip-update-check
+            echo -e "\nKey:" >> $GITHUB_STEP_SUMMARY
+            cat ./*KEYS.txt >> $GITHUB_STEP_SUMMARY
           fi
